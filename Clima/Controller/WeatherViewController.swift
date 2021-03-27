@@ -15,6 +15,8 @@ class WeatherViewController: UIViewController, UITextFieldDelegate {
     @IBOutlet weak var cityLabel: UILabel!
     @IBOutlet weak var searchField: UITextField!
     
+    var weatherManager = WeatherManager()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -23,18 +25,28 @@ class WeatherViewController: UIViewController, UITextFieldDelegate {
     
     @IBAction func searchButtonPressed(_ sender: UIButton) {
         searchField.endEditing(true)
-        print(searchField.text!)
         
     }
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         searchField.endEditing(true)
-        print(searchField.text!)
         return true
     }
     func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
-        
+        //textField instead of searchField is because we implemented
+        //this function to each textField, that may be created there
+        if textField.text != "" {
+            return true
+        }else{
+            textField.placeholder = "Type any city"
+            return false
+        }
     }
     func textFieldDidEndEditing(_ textField: UITextField) {
+        
+        if let city = searchField.text {
+            weatherManager.getWeather(cityName: city)
+        }
+        
         searchField.text = ""
     }
 }

@@ -7,9 +7,11 @@
 //
 
 import UIKit
+import CoreLocation
 
 protocol WeatherManagerDelegate {
     func didUpdateWeather(_ weatherManager: WeatherManager,weather: WeatherModel)
+    func didFailWithError(error: Error)
 }
 
 struct WeatherManager {
@@ -19,9 +21,13 @@ struct WeatherManager {
     
     func getWeather(cityName: String) {
         let urlString = "\(weatherURL)&q=\(cityName)"
-        performRequest(urlString: urlString)
+        performRequest(with: urlString)
     }
-    func performRequest(urlString: String) {
+    func getWeatherInCurrentLocation(latitude: CLLocationDegrees, longitude: CLLocationDegrees) {
+        let urlString = "\(weatherURL)&lat=\(latitude)&lon=\(longitude)"
+        performRequest(with: urlString)
+    }
+    func performRequest(with urlString: String) {
         
         //create an url
         if let url = URL(string: urlString) {
@@ -33,12 +39,11 @@ struct WeatherManager {
             //that will calling by mark, that we have received something from the session
             let task = urlSession.dataTask(with: url) { (data, response, error) in
                 if error != nil {
-                    print(error!)
-                    return
+                    weatherDelegate?.didFailWithError(error: error!)
                 }
                 if let safedata = data {
-                    if let weather = self.parseJSON(weatherData: safedata){
-                        weatherDelegate?.didUpdateWeather(WeatherManager, weather: weather)
+                    if let weather = self.parseJSON(safedata){
+                        weatherDelegate?.didUpdateWeather(self, weather: weather)
                     }
                 }
             }
@@ -46,21 +51,22 @@ struct WeatherManager {
             task.resume()
         }
     }
-    func parseJSON(weatherData: Data) -> WeatherModel? {
+    func parseJSON(_ weatherData: Data) -> WeatherModel? {
         let decoder = JSONDecoder()
         do {
             let decodedData = try decoder.decode(WeatherData.self, from: weatherData)
             let id = decodedData.list[0].weather[0].id
             let name = decodedData.list[0].name
+            let country = decodedData.list[0].sys.country
             let temp = decodedData.list[0].main.temp
             let feels_like_temp = decodedData.list[0].main.feels_like
+            let windSpeed = decodedData.list[0].wind.speed
             
-            let weather = WeatherModel(conditionID: id, city: name, temp: temp, feels_like_temp: feels_like_temp)
-            print(weather.conditionName)
-            print(weather.tempString)
+            let weather = WeatherModel(conditionID: id, city: name, country: country, temp: temp, feels_like_temp: feels_like_temp, windSpeed: windSpeed)
+            
             return weather
         } catch {
-            print(error)
+            weatherDelegate?.didFailWithError(error: error)
             return nil
         }
     }

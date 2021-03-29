@@ -11,11 +11,19 @@ import Foundation
 struct WeatherModel {
     let conditionID: Int
     let city: String
+    let country: String
     let temp: Float
     let feels_like_temp: Float
+    let windSpeed: Float
     
     var tempString: String {
-        return "\(String(format: "%.1f", temp))"
+        return String(format: "%.1f", temp)
+    }
+    var feelsLikeTempString: String {
+        return "Feels like \(String(format: "%.1f", feels_like_temp))"
+    }
+    var windSpeedString: String {
+        return "Wind speed is \(Int(windSpeed)) m/sec"
     }
     
     var conditionName: String {
